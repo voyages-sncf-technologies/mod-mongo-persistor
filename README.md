@@ -3,8 +3,6 @@
 This module allows data to be saved, retrieved, searched for, and deleted in a MongoDB instance. MongoDB is a great match
 for persisting vert.x data since it natively handles JSON (BSON) documents.
 
-# WARNING - Vertx-3 now has new Mongo 'modules', this mod should only be used for vertx 2.x 
-
 ####To use this module you must have a MongoDB instance running on your network.
 
 This is a multi-threaded worker module.
@@ -25,15 +23,10 @@ The mongo-persistor module takes the following configuration:
         "address": <address>,
         "host": <host>,
         "port": <port>,
-        "username": <username>,
-        "password": <password>,
         "db_name": <db_name>,
         "pool_size": <pool_size>,
-        "use_ssl": <bool>,
-        "read_preference": <e.g. "nearest" or "primary" etecetera>,
-        "use_mongo_types": <bool>,
-        "socket_timeout": <default 60000>,
-        "auto_connect_retry": <default true>
+        "fake": <fake>,
+	    	"use_ssl": <bool>
     }
 
 For example:
@@ -43,11 +36,9 @@ For example:
         "host": "192.168.1.100",
         "port": 27000,
         "pool_size": 20,
-        "db_name": "my_db",
-        "read_preference": "nearest",
-        "use_mongo_types": false
+        "db_name": "my_db"
     }
-
+    
 Let's take a look at each field in turn:
 
 * `address` The main address for the module. Every module has a main address. Defaults to `vertx.mongopersistor`.
@@ -55,9 +46,8 @@ Let's take a look at each field in turn:
 * `port` Port at which the MongoDB instance is listening. Defaults to `27017`.
 * `db_name` Name of the database in the MongoDB instance to use. Defaults to `default_db`.
 * `pool_size` The number of socket connections the module instance should maintain to the MongoDB server. Default is 10.
+* `fake` If true then a fake in memory Mongo DB server is used instead (using Fongo). Useful for testing!
 * `use_ssl` enable SSL based connections.  See http://docs.mongodb.org/manual/tutorial/configure-ssl/ for more details. Defaults to `false`.
-* `read_preference` is the read preferences, see http://docs.mongodb.org/manual/core/read-preference/. Default is "primary".
-* `use_mongo_types` enable the use of mongo types such as Date, byte array, array list. Note that if enabled this will incur a performance overhead to all queries. Default is `false`.
 
 ### Replsets or sharding
 
@@ -90,8 +80,8 @@ To save a document send a JSON message to the module main address:
         "action": "save",
         "collection": <collection>,
         "document": <document>
-    }
-
+    }     
+    
 Where:
 * `collection` is the name of the MongoDB collection that you wish to save the document in. This field is mandatory.
 * `document` is the JSON document that you wish to save.
@@ -108,34 +98,34 @@ An example would be:
             "username": "tim",
             "password": "wibble"
         }
-    }
-
+    }  
+    
 When the save complete successfully, a reply message is sent back to the sender with the following data:
 
     {
         "status": "ok"
     }
-
+    
 The reply will also contain a field `_id` if the document that was saved didn't specify an id, this will be an automatically generated UUID, for example:
 
     {
         "status": "ok"
         "_id": "ffeef2a7-5658-4905-a37c-cfb19f70471d"
     }
-
-If you save a document which already possesses an `_id` field, and a document with the same id already exists in the database, then the document will be updated.
-
+     
+If you save a document which already possesses an `_id` field, and a document with the same id already exists in the database, then the document will be updated. 
+ 
 If an error occurs in saving the document a reply is returned:
 
     {
         "status": "error",
         "message": <message>
     }
-
+    
 Where
 * `message` is an error message.
 
-
+   
 ### Update
 
 Updates a document in the database.
@@ -154,7 +144,7 @@ To update a document send a JSON message to the module main address:
         },
         upsert : <upsert>
         multi: <multi>
-    }
+    }  
 
 Where:
  * `collection` is the name of the MongoDB collection that you wish to save the document in. This field is mandatory.
@@ -200,7 +190,7 @@ To find documents send a JSON message to the module main address:
         "hint": <index hint>,
         "batch_size": <batch_size>
     }
-
+    
 Where:
 * `collection` is the name of the MongoDB collection that you wish to search in in. This field is mandatory.
 * `matcher` is a JSON object that you want to match against to find matching documents. This obeys the normal MongoDB matching rules.
@@ -220,17 +210,17 @@ An example would be:
         "matcher": {
             "item": "cheese"
         }
-    }
-
-This would return all orders where the `item` field has the value `cheese`.
+    }  
+    
+This would return all orders where the `item` field has the value `cheese`. 
 
 When the find complete successfully, a reply message is sent back to the sender with the following data:
 
     {
         "status": "ok",
         "results": <results>
-    }
-
+    }   
+    
 Where
 *`results` is a JSON array containing the results of the find operation. For example:
 
@@ -254,14 +244,14 @@ Where
             }
         ]
     }
-
+    
 If an error occurs in finding the documents a reply is returned:
 
     {
         "status": "error",
         "message": <message>
     }
-
+    
 Where
 *`message` is an error message.
 
@@ -313,11 +303,11 @@ For instance, in JavaScript you might do something like:
     eb.send('foo.myPersistor', {
         action: 'find',
         collection: 'items',
-        matcher: {}
+        matcher: {}        
     }, createReplyHandler());
-
-If there is more data to be requested and you do not reply to get the next batch within a timeout (see `timeout parameter`), then the underlying MongoDB cursor will be closed, and any further attempts to request more will fail.
-
+    
+If there is more data to be requested and you do not reply to get the next batch within a timeout (see `timeout parameter`), then the underlying MongoDB cursor will be closed, and any further attempts to request more will fail.    
+    
 
 ### Find One
 
@@ -330,8 +320,8 @@ To find a document send a JSON message to the module main address:
         "collection": <collection>,
         "matcher": <matcher>,
         "keys": <keys>
-    }
-
+    }     
+    
 Where:
 * `collection` is the name of the MongoDB collection that you wish to search in in. This field is mandatory.
 * `matcher` is a JSON object that you want to match against to find a matching document. This obeys the normal MongoDB matching rules.
@@ -347,8 +337,8 @@ An example would be:
         "matcher": {
             "_id": "ffeef2a7-5658-4905-a37c-cfb19f70471d"
         }
-    }
-
+    }  
+    
 This would return the item with the specified id.
 
 When the find complete successfully, a reply message is sent back to the sender with the following data:
@@ -356,59 +346,17 @@ When the find complete successfully, a reply message is sent back to the sender 
     {
         "status": "ok",
         "result": <result>
-    }
-
+    }       
+    
 If an error occurs in finding the documents a reply is returned:
 
     {
         "status": "error",
         "message": <message>
     }
-
+    
 Where
 *`message` is an error message.
-
-### Find and modify
-
-The findAndModify command atomically modifies and returns a single document. By default, the returned document does not include the modifications made on the update. To return the document with the modifications made on the update, use the `new` option. See http://docs.mongodb.org/manual/reference/command/findAndModify/ for details:
-
-    {
-        "action": "find_and_modify",
-        "collection": <collection>,
-        "matcher": <document>,
-        "sort": <document>,
-        "remove": <boolean>,
-        "update": <document>,
-        "new": <boolean>,
-        "fields": <document>,
-        "upsert": <boolean>
-    }
-
-When the operation is successful a reply message is sent back to the sender with the relevant document:
-
-    {
-        "status": "ok",
-        "result": <document>
-    }
-
-Otherwise, it sends an error:
-
-    {
-        "status": "error",
-        "message": <string>
-    }
-
-An example would be:
-
-    {
-        "action": "find_and_modify",
-        "collection": "counters",
-        "matcher": { "_id": "people" },
-        "update": { "$inc": { "seq": 1 } },
-        "new": true
-    }
-
-This would find a document in the `counters` collection with an `_id` of "people" and increment its `seq` field and reply successfully with the new document, as `new` was set to true.
 
 ### Count
 
@@ -468,8 +416,8 @@ To delete documents send a JSON message to the module main address:
         "action": "delete",
         "collection": <collection>,
         "matcher": <matcher>
-    }
-
+    }     
+    
 Where:
 * `collection` is the name of the MongoDB collection that you wish to delete from. This field is mandatory.
 * `matcher` is a JSON object that you want to match against to delete matching documents. This obeys the normal MongoDB matching rules.
@@ -484,8 +432,8 @@ An example would be:
         "matcher": {
             "_id": "ffeef2a7-5658-4905-a37c-cfb19f70471d"
         }
-    }
-
+    }  
+    
 This would delete the item with the specified id.
 
 When the find complete successfully, a reply message is sent back to the sender with the following data:
@@ -493,60 +441,10 @@ When the find complete successfully, a reply message is sent back to the sender 
     {
         "status": "ok",
         "number": <number>
-    }
-
+    }       
+    
 Where
 *`number` is the number of documents deleted.
-
-If an error occurs in finding the documents a reply is returned:
-
-    {
-        "status": "error",
-        "message": <message>
-    }
-
-Where
-*`message` is an error message.
-
-### Aggregate
-
-Executes aggregation pipeline(s) in the database.
-
-To run an aggregation send a JSON message to the module main address:
-
-    {
-        "action": "aggregate",
-        "collection": <collection>,
-        pipelines: [
-            <pipeline_1>,
-            <pipeline_2>,
-            <pipeline_N>,
-        ]
-    }     
-    
-Where:
-* `collection` is the name of the MongoDB collection that you wish to aggregate in. This field is mandatory.
-* `pipelines` is a JSON array that composes your aggregation pipeline(s). This field is mandatory and obeys the normal MongoDB aggregation rules.
-
-An example would be:
-
-    {
-        "action": "aggregate",
-        "collection": "testcities",
-        pipelines: [
-            { $group: { _id: { state: "$state", city: "$city" }, pop: { $sum: "$pop" } } },
-            { $group: { _id: "$_id.state", avgCityPop: { $avg: "$pop" } } }
-        ]
-    }  
-    
-That would return the average populations for cities in each state
-
-When the aggregation completes successfully, a reply message is sent back to the sender with the following data:
-
-    {
-        "status": "ok",
-        "result": <result>
-    }       
     
 If an error occurs in finding the documents a reply is returned:
 
@@ -698,12 +596,11 @@ If an error occurs in finding the documents a reply is returned:
 Where
 * `message` is an error message.
 
-
 ### Command
 
 Runs an arbitrary MongoDB command.
 
-Command can be used to run more advanced MongoDB features, such as using Mapreduce.
+Command can be used to run more advanced MongoDB features, such as using Mapreduce. 
 There is a complete list of commands at http://docs.mongodb.org/manual/reference/command/.
 
 An example that just pings to make sure the mongo instance is up would be:

@@ -10,3 +10,5 @@ bin
 build
 out
 /mods
+/gradle/wrapper/*.zip
+
